@@ -1,10 +1,10 @@
 # SpTFS
 
-# Experiment data
+## Experiment data
 
 Directory: data
 
-# Code:
+## Code:
 
 Directory: software
 

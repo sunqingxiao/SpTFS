@@ -115,7 +115,7 @@ class Dl4dSample(object):
         """ return data of a batch of 4d tensors
         """
         dimensions = 4
-        formats = 6
+        formats = 5
         filenames = []
         labels = []
         sp4d_batch = []
@@ -124,11 +124,11 @@ class Dl4dSample(object):
         filelist = open(tensorlist)
         for line in filelist:
             list_seg = line.split()
-            filenames.append(list_seg[-25])
+            filenames.append(list_seg[-21])
             tmplabels = []
             for mode in range(0, 4):
-                tmplabels.append([float(list_seg[-24 + mode * 6]), float(list_seg[-23 + mode * 6]), float(list_seg[-22 + mode * 6]), \
-                        float(list_seg[-21 + mode * 6]), float(list_seg[-20 + mode * 6]), float(list_seg[-19 + mode * 6])])
+                tmplabels.append([float(list_seg[-20 + mode * 5]), float(list_seg[-19 + mode * 5]), float(list_seg[-18 + mode * 5]), \
+                        float(list_seg[-17 + mode * 5]), float(list_seg[-16 + mode * 5])])
                 #dbg(tmplabels)
             dbg(tmplabels)
             labels.append(tmplabels)
@@ -148,7 +148,7 @@ class Dl4dSample(object):
             dbg(sp4dtns)
             #dbg(tensor_batch)
         
-        return sp4d_batch, tensor_batch, labels
+        return tensor_batch, labels
 
 if __name__ == '__main__':
     """[summary]
@@ -156,7 +156,7 @@ if __name__ == '__main__':
     [description]
     """
     if len(sys.argv) < 3:
-        print("Usage: {} <matrix.list> <resolution>".format(sys.argv[0]))
+        print("Usage: {} <tensorlist> <resolution>".format(sys.argv[0]))
         exit(1)
 
     TENSORLIST = sys.argv[1] # '../test/Origin.list'
@@ -164,6 +164,5 @@ if __name__ == '__main__':
 
     if os.path.isfile(TENSORLIST):
         sampler = Dl4dSample()
-        metas, imgs, labels = sampler.tns4d_batch(TENSORLIST, RES)
-        np.savez('data/{}full-F.npz'.format(RES), metas=metas, imgs=imgs, labels=labels)
-
+        imgs, labels = sampler.tns4d_batch(TENSORLIST, RES)
+        np.savez('data/flatten-data.npz'.format(RES), imgs=imgs, labels=labels)

@@ -3,16 +3,15 @@ import sys
 import random
 import numpy as np
 
-if __name__=='__main__':
-    flatten_data = np.load('/home/sqx/tensor-format/tensor-code/import_data/flatten-density-baseline-3d-full256-F.npz')
-    map_data = np.load('/home/sqx/tensor-format/tensor-code/import_data/map-density-baseline-3d-256full.npz')
-    ftdata = np.load('/home/sqx/tensor-format/tensor-code/import_data/comft.npz')
-    labeldata = np.load('/home/sqx/tensor-format/tensor-code/import_data/labels-cpu-3d.npz')
+def main():
+    flatten_data = np.load('data/flatten-data.npz')
+    map_data = np.load('data/map-data.npz')
+    ftdata = np.load('data/features.npz')
+    labeldata = np.load('data/labels.npz')
 
     flatten_imgs = flatten_data['imgs']
-    features = ftdata['comft']
+    features = ftdata['features']
     map_imgs = map_data['imgs']
-    metas = map_data['metas']
     labels = labeldata['labels']
 
     batch_size = flatten_imgs.shape[0]
@@ -34,15 +33,13 @@ if __name__=='__main__':
             tmptrain.append(i)
         trainlist = np.concatenate((tnslist[tmptrain[0]], tnslist[tmptrain[1]], tnslist[tmptrain[2]], tnslist[tmptrain[3]]), axis=0)
 
-        for mode in range(0, 5):
+        for mode in range(0, 3):
             train_imgs = np.zeros((len(trainlist), 2, resolution, resolution), dtype='float32')
             test_imgs = np.zeros((len(testlist), 2, resolution, resolution), dtype='float32')
             train_features = np.zeros((len(trainlist), numft), dtype='float32')
             test_features = np.zeros((len(testlist), numft), dtype='float32')
             train_labels = np.zeros((len(trainlist), 5), dtype='int32')
             test_labels = np.zeros((len(testlist), 5), dtype='int32')
-            train_metas = []
-            test_metas = []
 
             flattenMax = flatten_imgs[:, mode, :, :].max()
             mapMax = map_imgs[:, mode, :, :].max()
@@ -56,9 +53,6 @@ if __name__=='__main__':
                 tmp_labels = labels[trainlist[i]][mode]
                 train_labels[i][np.argmin(tmp_labels)] = 1
 
-                tmp_metas = metas[trainlist[i]]
-                train_metas.append(tmp_metas)
-
             for i in range(0, len(testlist)):
                 test_imgs[i, 0, :, :] = flatten_imgs[testlist[i], mode, :, :] / flatten_imgs[testlist[i], mode, :, :].max()
                 test_imgs[i, 1, :, :] = map_imgs[testlist[i], mode, :, :] / map_imgs[testlist[i], mode, :, :].max()
@@ -68,8 +62,8 @@ if __name__=='__main__':
                 tmp_labels = labels[testlist[i]][mode]
                 test_labels[i][np.argmin(tmp_labels)] = 1
 
-                tmp_metas = metas[testlist[i]]
-                test_metas.append(tmp_metas)
+            np.savez('data/mode{}_cv{}_train.npz'.format(mode, cvindex), imgs=train_imgs, features=train_features, labels=train_labels)
+            np.savez('data/mode{}_cv{}_test.npz'.format(mode, cvindex), imgs=test_imgs, features=test_features, labels=test_labels)
 
-            np.savez('data/256_ft_mul_mode{}_cv{}_train.npz'.format(mode, cvindex), metas=train_metas, imgs=train_imgs, features=train_features, labels=train_labels)
-            np.savez('data/256_ft_mul_mode{}_cv{}_test.npz'.format(mode, cvindex), metas=test_metas, imgs=test_imgs, features=test_features, labels=test_labels)
+if __name__=='__main__':
+    main()

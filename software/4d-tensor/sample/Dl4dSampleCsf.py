@@ -184,7 +184,7 @@ class gbt4dSample(object):
         filelist = open(tensorlist)
         for line in filelist:
             list_seg = line.split()
-            filenames.append(list_seg[-25])
+            filenames.append(list_seg[-21])
         filelist.close()
 
         ## record the feature sets of tensors

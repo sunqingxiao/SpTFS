@@ -47,38 +47,6 @@ class Dl4dSample(object):
         wrapper of 4d tensor sampling
     """
 
-    #def __init__(self):
-        #self.ffi = FFI()
-
-#    def tns4d_sample(self, sp4dtns, mat, output_resolution):
-#        ## matrix has two dimensions (dim0 and dim1)
-#        img_dim0 = np.zeros((output_resolution, output_resolution), dtype='int32')
-#        img_dim1 = np.zeros((output_resolution, output_resolution), dtype='int32')
-#       
-#        ## get the histogram sampling matrixes (both dims)
-#        scale_dim0 = sp4dtns.dim0 / output_resolution
-#        scale_dim1 = sp4dtns.dim1 / output_resolution
-#        maxdim = max(sp4dtns.dim0, sp4dtns.dim1)
-#
-#        dbg(len(mat))
-#        dbg(sp4dtns.nnz)
-#
-#        for findex in range(0, sp4dtns.nnz):
-#            #dbg(mat[findex][0])
-#            #dbg(mat[findex][1])
-#            bindim = int(output_resolution * abs(mat[findex][0]-mat[findex][1]) / maxdim)
-#            
-#            ## get the histogram of image (dim0)
-#            index_dim0 = int(mat[findex][0] / scale_dim0)
-#            img_dim0[index_dim0][bindim] += 1
-#            
-#            ## get the histogram of image (dim1)
-#            index_dim1 = int(mat[findex][1] / scale_dim0)
-#            img_dim1[index_dim1][bindim] += 1
-#        
-#        return img_dim0, img_dim1
-
-	
     def tns4d_Sample(self, tns_dir, output_resolution):
         ## the basic information of sparse 4d tensor
         sp4dtns = Sp4dtns()
@@ -123,8 +91,6 @@ class Dl4dSample(object):
             img_12[indexdim[1]][indexdim[2]] += 1
             img_13[indexdim[1]][indexdim[3]] += 1
             img_23[indexdim[2]][indexdim[3]] += 1
-            #print('{} {} {}\n'.format(indexdim[0],indexdim[1], indexdim[2]))
-        #dbg(img_0)
         tnsfile.close()
 
         return tns_to_dict(sp4dtns), img_01, img_02, img_03, img_12, img_13, img_23
@@ -134,7 +100,7 @@ class Dl4dSample(object):
         """ return data of a batch of 4d tensors
         """
         dimensions = 6
-        formats = 6
+        formats = 5
         filenames = []
         labels = []
         sp4d_batch = []
@@ -143,12 +109,11 @@ class Dl4dSample(object):
         filelist = open(tensorlist)
         for line in filelist:
             list_seg = line.split()
-            filenames.append(list_seg[-25])
+            filenames.append(list_seg[-21])
             tmplabels = []
             for mode in range(0, 4):
-                tmplabels.append([float(list_seg[-24 + mode * 6]), float(list_seg[-23 + mode * 6]), float(list_seg[-22 + mode * 6]), \
-                        float(list_seg[-21 + mode * 6]), float(list_seg[-20 + mode * 6]), float(list_seg[-19 + mode * 6])])
-                #dbg(tmplabels)
+                tmplabels.append([float(list_seg[-20 + mode * 5]), float(list_seg[-19 + mode * 5]), float(list_seg[-18 + mode * 5]), \
+                        float(list_seg[-17 + mode * 5]), float(list_seg[-16 + mode * 5])])
             dbg(tmplabels)
             labels.append(tmplabels)
         filelist.close()
@@ -167,12 +132,11 @@ class Dl4dSample(object):
             tensor_batch[findex, 3, :, :] = img_12
             tensor_batch[findex, 4, :, :] = img_13
             tensor_batch[findex, 5, :, :] = img_23
-            #print(tensor_batch)
 
             dbg(sp4dtns)
             #dbg(tensor_batch)
         
-        return sp4d_batch, tensor_batch, labels
+        return tensor_batch, labels
 
 if __name__ == '__main__':
     """[summary]
@@ -180,7 +144,7 @@ if __name__ == '__main__':
     [description]
     """
     if len(sys.argv) < 3:
-        print("Usage: {} <matrix.list> <resolution>".format(sys.argv[0]))
+        print("Usage: {} <tensorlist> <resolution>".format(sys.argv[0]))
         exit(1)
 
     TENSORLIST = sys.argv[1] # '../test/Origin.list'
@@ -188,25 +152,5 @@ if __name__ == '__main__':
 
     if os.path.isfile(TENSORLIST):
         sampler = Dl4dSample()
-        metas, imgs, labels = sampler.tns4d_batch(TENSORLIST, RES)
-        np.savez('data/full{}.npz'.format(RES), metas=metas, imgs=imgs, labels=labels)
-
-    #if os.path.isfile(TENSORLIST):
-    #    try:
-    #        sp4dtns, img_dim0, img_dim1 = tns4d_sample(TENSORLIST, RES)
-    #        dbg(sp4dtns)
-    #        dbg(img_dim0)
-    #        dbg(img_dim1)
-    #        #np.savez('data{}.npz'.format(RES), metas=metas, imgs=imgs)
-    #    except:
-    #        print("Error")
-    #        exit(1)
-
-
-
-        
-            
-            
-            
-            
-        
+        imgs, labels = sampler.tns4d_batch(TENSORLIST, RES)
+        np.savez('data/map-data.npz'.format(RES), imgs=imgs, labels=labels)

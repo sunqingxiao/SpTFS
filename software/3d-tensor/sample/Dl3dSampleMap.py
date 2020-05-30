@@ -46,38 +46,6 @@ class Dl3dSample(object):
         wrapper of 3d tensor sampling
     """
 
-    #def __init__(self):
-        #self.ffi = FFI()
-
-#    def tns3d_sample(self, sp3dtns, mat, output_resolution):
-#        ## matrix has two dimensions (dim0 and dim1)
-#        img_dim0 = np.zeros((output_resolution, output_resolution), dtype='int32')
-#        img_dim1 = np.zeros((output_resolution, output_resolution), dtype='int32')
-#       
-#        ## get the histogram sampling matrixes (both dims)
-#        scale_dim0 = sp3dtns.dim0 / output_resolution
-#        scale_dim1 = sp3dtns.dim1 / output_resolution
-#        maxdim = max(sp3dtns.dim0, sp3dtns.dim1)
-#
-#        dbg(len(mat))
-#        dbg(sp3dtns.nnz)
-#
-#        for findex in range(0, sp3dtns.nnz):
-#            #dbg(mat[findex][0])
-#            #dbg(mat[findex][1])
-#            bindim = int(output_resolution * abs(mat[findex][0]-mat[findex][1]) / maxdim)
-#            
-#            ## get the histogram of image (dim0)
-#            index_dim0 = int(mat[findex][0] / scale_dim0)
-#            img_dim0[index_dim0][bindim] += 1
-#            
-#            ## get the histogram of image (dim1)
-#            index_dim1 = int(mat[findex][1] / scale_dim0)
-#            img_dim1[index_dim1][bindim] += 1
-#        
-#        return img_dim0, img_dim1
-
-	
     def tns3d_Sample(self, tns_dir, output_resolution):
         ## the basic information of sparse 3d tensor
         sp3dtns = Sp3dtns()
@@ -115,8 +83,6 @@ class Dl3dSample(object):
             img_0[indexdim[1]][indexdim[2]] += 1
             img_1[indexdim[0]][indexdim[2]] += 1
             img_2[indexdim[0]][indexdim[1]] += 1
-            #print('{} {} {}\n'.format(indexdim[0],indexdim[1], indexdim[2]))
-        #dbg(img_0)
         tnsfile.close()
 
         return tns_to_dict(sp3dtns), img_0, img_1, img_2
@@ -126,7 +92,7 @@ class Dl3dSample(object):
         """ return data of a batch of 3d tensors
         """
         dimensions = 3
-        formats = 6
+        formats = 5
         filenames = []
         labels = []
         sp3d_batch = []
@@ -135,12 +101,11 @@ class Dl3dSample(object):
         filelist = open(tensorlist)
         for line in filelist:
             list_seg = line.split()
-            filenames.append(list_seg[-19])
+            filenames.append(list_seg[-16])
             tmplabels = []
             for mode in range(0, 3):
-                tmplabels.append([float(list_seg[-18 + mode * 6]), float(list_seg[-17 + mode * 6]), float(list_seg[-16 + mode * 6]), \
-                        float(list_seg[-15 + mode * 6]), float(list_seg[-14 + mode * 6]), float(list_seg[-13 + mode * 6])])
-                #dbg(tmplabels)
+                tmplabels.append([float(list_seg[-15 + mode * 5]), float(list_seg[-14 + mode * 5]), float(list_seg[-13 + mode * 5]), \
+                        float(list_seg[-12 + mode * 5]), float(list_seg[-11 + mode * 5])])
             dbg(tmplabels)
             labels.append(tmplabels)
         filelist.close()
@@ -160,7 +125,7 @@ class Dl3dSample(object):
             dbg(sp3dtns)
             #dbg(tensor_batch)
         
-        return sp3d_batch, tensor_batch, labels
+        return tensor_batch, labels
 
 if __name__ == '__main__':
     """[summary]
@@ -168,7 +133,7 @@ if __name__ == '__main__':
     [description]
     """
     if len(sys.argv) < 3:
-        print("Usage: {} <matrix.list> <resolution>".format(sys.argv[0]))
+        print("Usage: {} <tensorlist> <resolution>".format(sys.argv[0]))
         exit(1)
 
     TENSORLIST = sys.argv[1] # '../test/Origin.list'
@@ -176,8 +141,8 @@ if __name__ == '__main__':
 
     if os.path.isfile(TENSORLIST):
         sampler = Dl3dSample()
-        metas, imgs, labels = sampler.tns3d_batch(TENSORLIST, RES)
-        np.savez('data/full{}.npz'.format(RES), metas=metas, imgs=imgs, labels=labels)
+        imgs, labels = sampler.tns3d_batch(TENSORLIST, RES)
+        np.savez('data/map-data.npz'.format(RES), imgs=imgs, labels=labels)
 
         
             

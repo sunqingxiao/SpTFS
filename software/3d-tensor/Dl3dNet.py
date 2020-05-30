@@ -5,7 +5,6 @@ sys.path.append(ROOTDIR)
 import tensorflow as tf
 import numpy as np
 from Dl3dDataset import DataSet
-#from Dl3dSample import Dl3dSample as Sampler
 
 ## read numpy data
 def load_data(filename):
@@ -72,19 +71,18 @@ def single_net(RES):
         h_pool3 = max_pool_2x2(h_conv3)
         # [-1, 4, 4, 64] = [-1, 1024]
 
-    # dense layer
     with tf.name_scope('fc1'):
         W_fc1 = weight_variable([4 * 4 * 64, 512])
         b_fc1 = bias_variable([512])
 
         h_pool3_flat = tf.reshape(h_pool3, [-1, 4 * 4 * 64])
         h_fc1 = tf.nn.relu(tf.matmul(h_pool3_flat, W_fc1) + b_fc1)
-        # [-1, 32]
+        # [-1, 512]
 
     return x, ft, y_, h_fc1
 
 class DLSpMVModel(object):
-    def __init__(self, train_data, test_data, output_data):
+    def __init__(self, train_data, test_data):
 
         self.RES = 0
         self.mean = 0
@@ -105,7 +103,6 @@ class DLSpMVModel(object):
             self.RES = self.test.images.shape[-1] # 128
 
         self.STEPS = 5000
-        self.output = output_data
 
     def build_graph(self):
         pass
@@ -152,7 +149,6 @@ class DLSpMVModel(object):
         with tf.name_scope('train'):
             train_step = tf.train.AdamOptimizer(1e-4).minimize(cross_entropy)
             correct_prediction = tf.equal(tf.argmax(y_conv, 1), tf.argmax(y_, 1))
-            #correct_prediction = tf.equal(y_conv, y_)
             accuracy = tf.reduce_mean(
                 tf.cast(correct_prediction, tf.float32), name='acc_to_restore')
             tf.summary.scalar('accuracy', accuracy)
@@ -167,7 +163,7 @@ class DLSpMVModel(object):
             sess.run(tf.global_variables_initializer())
             for i in range(self.STEPS):
                 batch = self.train.next_batch(100)
-                if i % 20 == 0:
+                if i % 100 == 0:
                     train_accuracy = sess.run(accuracy, feed_dict={x: batch[0][:,0,:,:], ft: batch[1], y_: batch[2], x2: batch[0][:,1,:,:], ft2: batch[1], y2_: batch[2], keep_prob: 1.0})
                     print('step %d, training accuracy %g' % (i, train_accuracy))
                 else:
@@ -176,7 +172,7 @@ class DLSpMVModel(object):
             print('test accuracy %g' % accuracy.eval(feed_dict={x: self.test.images[:,0,:,:], ft: self.test.features, y_: self.test.labels, x2: self.test.images[:,1,:,:], ft2: self.test.features, y2_: self.test.labels, keep_prob: 1.0}))
 
             # save model and checkpoint
-            save_path = saver.save(sess, os.path.join(ROOTDIR, "single-model/model-{}.ckpt".format(self.STEPS)))
+            save_path = saver.save(sess, os.path.join(ROOTDIR, "model/model-{}.ckpt".format(self.STEPS)))
             print("Model saved in file %s" % save_path)
 
     def testing(self):
@@ -191,7 +187,7 @@ class DLSpMVModel(object):
 
         with tf.Session() as sess:
             # retore graph
-            saver = tf.train.import_meta_graph(os.path.join(ROOTDIR, 'single-model/model-{}.ckpt.meta'.format(self.STEPS)))
+            saver = tf.train.import_meta_graph(os.path.join(ROOTDIR, 'model/model-{}.ckpt.meta'.format(self.STEPS)))
             # the current graph can be explored by
             graph = tf.get_default_graph()
             # restore value
@@ -210,37 +206,27 @@ class DLSpMVModel(object):
             # for operation, use get_operation_by_name()
             # NOTE: Tensor names must be of the form "<op_name>:<output_index>"
             acc = graph.get_tensor_by_name('train/acc_to_restore:0')
-            y_conv = graph.get_tensor_by_name('out/y_conv_restore:0')
+            #y_conv = graph.get_tensor_by_name('out/y_conv_restore:0')
            # test
             print("-------------------------------------------------------")
             print('Test accuracy %g' % sess.run(acc, feed_dict={x: self.test.images[:,0,:,:], y_: self.test.labels, x2: self.test.images[:,1,:,:], y2_: self.test.labels, keep_prob: 1.0}))
-            out_y = sess.run(y_conv, feed_dict={x: self.test.images[:,0,:,:], ft: self.test.features, y_: self.test.labels, x2: self.test.images[:,1,:,:], ft2: self.test.features, y2_: self.test.labels, keep_prob: 1.0})
-
-            wrongIds = np.zeros((self.test.labels.shape[0], 2), dtype='int32')
-            for i in range(self.test.labels.shape[0]):
-                wrongIds[i][0] = np.argmax(self.test.labels[i])
-                wrongIds[i][1] = np.argmax(out_y[i])
-            np.savez('{}'.format(self.output), wrongIds=wrongIds)
-
             print("-------------------------------------------------------")
 
 
 def main():
-    if len(sys.argv) < 4:
-        print("Usage: {} FLAG{train, test, predict}")
+    if len(sys.argv) < 3:
+        print("usage: {} flag{train, test, predict} {train dat} {test data}")
         exit()
-    FLAG = sys.argv[1].lower()
 
+    FLAG = sys.argv[1].lower()
     train_data = sys.argv[2]
     test_data = sys.argv[3]
-    output_data = sys.argv[4]
 
     print(train_data)
     print(test_data)
 
     model = DLSpMVModel(os.path.join(ROOTDIR, train_data),
-                        os.path.join(ROOTDIR, test_data),
-                        os.path.join(ROOTDIR, output_data))
+                        os.path.join(ROOTDIR, test_data))
 
     if FLAG == 'train':
         model.training()

@@ -183,7 +183,7 @@ class gbt3dSample(object):
         filelist = open(tensorlist)
         for line in filelist:
             list_seg = line.split()
-            filenames.append(list_seg[-19])
+            filenames.append(list_seg[-16])
         filelist.close()
 
         ## record the feature sets of tensors

@@ -153,11 +153,11 @@ class gbt4dSample(object):
         filelist = open(tensorlist)
         for line in filelist:
             list_seg = line.split()
-            filenames.append(list_seg[-25])
+            filenames.append(list_seg[-21])
             tmplabel = []
             for mode in range(0, 4):
-                codes = [float(list_seg[-24 + mode * 6]), float(list_seg[-23 + mode * 6]), float(list_seg[-22 + mode * 6]), \
-                        float(list_seg[-21 + mode * 6]), float(list_seg[-20 + mode * 6]), float(list_seg[-19 + mode * 6])]
+                codes = [float(list_seg[-20 + mode * 5]), float(list_seg[-19 + mode * 5]), float(list_seg[-18 + mode * 5]), \
+                        float(list_seg[-17 + mode * 5]), float(list_seg[-16 + mode * 5])]
                 tmplabel.append(codes.index(min(codes)))
             labels.append(tmplabel)
         filelist.close()

@@ -2,7 +2,7 @@
 
 This directory contains the implementation of `SpTFS` and will be further updated later.
 
-Note that we conducted the safety checks on network inference. Specifically, we have repeated the process of network inference 10 times, and collected the means, medians and percentiles (i.e., 20%, 40%, 60% and 80%) of prediction accuracies. The scripts for collectin data and safety checks are detailed in the `scripts` directory.
+Note that we conducted the safety checks on network inference. Specifically, we repeated the process of network inference 10 times, and collected the means, medians and percentiles (i.e., 20%, 40%, 60% and 80%) of prediction accuracies. The scripts for collectin data and safety checks are detailed in the `scripts` directory.
 
 Now take the prediction for 3-D tensors as an example.
 

@@ -14,6 +14,7 @@ def main():
     per40_precs = np.zeros((num_modes), dtype='float32')
     per60_precs = np.zeros((num_modes), dtype='float32')
     per80_precs = np.zeros((num_modes), dtype='float32')
+    stdev_precs = np.zeros((num_modes), dtype='float32')
     
     for mode in range(0, num_modes):
         mean_precs[mode] = np.mean(precs[mode])
@@ -22,6 +23,7 @@ def main():
         per40_precs[mode] = np.percentile(precs[mode], 40)
         per60_precs[mode] = np.percentile(precs[mode], 60)
         per80_precs[mode] = np.percentile(precs[mode], 80)
+        stdev_precs[mode] = np.std(precs[mode], ddof=1)
     
     print('mean precisions: {}'.format(mean_precs))
     print('median precisions: {}'.format(median_precs))

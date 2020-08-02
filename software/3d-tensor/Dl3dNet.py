@@ -222,7 +222,7 @@ class DLSpMVModel(object):
 
 def main():
     if len(sys.argv) < 5:
-        print("usage: {} flag{train, test, predict} {train data} {test data} {model data} {result data}")
+        print("usage: {} flag{train, test} {train data} {test data} {model data} {result data}")
         exit()
 
     FLAG = sys.argv[1].lower()

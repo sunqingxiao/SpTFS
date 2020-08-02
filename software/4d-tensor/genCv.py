@@ -3,19 +3,17 @@ import sys
 import random
 import numpy as np
 
+## generate 5-fold CV training/testing datasets
 if __name__=='__main__':
-    flatten_data = np.load('data/flatten-data.npz')
-    map_data = np.load('data/map-data.npz')
-    ftdata = np.load('data/features.npz')
-    labeldata = np.load('data/labels.npz')
-
-    flatten_imgs = flatten_data['imgs']
-    features = ftdata['features']
-    map_imgs = map_data['imgs']
-    labels = labeldata['labels']
+    data = np.load('../datasets/dataset-cpu-4d.npz')
+    flatten_imgs = data['flatten_imgs']
+    features = data['features']
+    map_imgs = data['map_imgs']
+    labels = data['labels']
 
     batch_size = flatten_imgs.shape[0]
     numft = features.shape[1]
+    numformats = labels.shape[2]
     dimensions = map_imgs.shape[1]
     resolution = map_imgs.shape[2]
 
@@ -55,8 +53,8 @@ if __name__=='__main__':
             test_imgs = np.zeros((len(testlist), 4, resolution, resolution), dtype='float32')
             train_features = np.zeros((len(trainlist), numft), dtype='float32')
             test_features = np.zeros((len(testlist), numft), dtype='float32')
-            train_labels = np.zeros((len(trainlist), 5), dtype='int32')
-            test_labels = np.zeros((len(testlist), 5), dtype='int32')
+            train_labels = np.zeros((len(trainlist), numformats), dtype='int32')
+            test_labels = np.zeros((len(testlist), numformats), dtype='int32')
 
             flattenMax = flatten_imgs[:, mode, :, :].max()
             mapMax = map_imgs[:, mode, :, :].max()
@@ -72,19 +70,20 @@ if __name__=='__main__':
                 tmp_labels = labels[trainlist[i]][mode]
                 train_labels[i][np.argmin(tmp_labels)] = 1
 
-            print(train_labels)
+            #print(train_features)
 
             for i in range(0, len(testlist)):
                 test_imgs[i, 0, :, :] = flatten_imgs[testlist[i], mode, :, :] / flatten_imgs[testlist[i], mode, :, :].max()
                 for j in range(0, 3):
                     test_imgs[i, 1+j, :, :] = map_imgs[testlist[i], maplist[j], :, :] / map_imgs[testlist[i], maplist[j], :, :].max()
                 for j in range(0, numft):
-                    test_features[i][ftcounter] = features[testlist[i]][j] / features[:, j].max()
+                    test_features[i][j] = features[testlist[i]][j] / features[:, j].max()
 
                 tmp_labels = labels[testlist[i]][mode]
                 test_labels[i][np.argmin(tmp_labels)] = 1
 
-            print(test_labels)
+            #print(test_features)
 
             np.savez('data/mode{}_cv{}_train.npz'.format(mode, cvindex), imgs=train_imgs, features=train_features, labels=train_labels)
             np.savez('data/mode{}_cv{}_test.npz'.format(mode, cvindex), imgs=test_imgs, features=test_features, labels=test_labels)
+            print('mode {} cv {} finished'.format(mode, cvindex))

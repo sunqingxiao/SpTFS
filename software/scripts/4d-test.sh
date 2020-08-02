@@ -1,14 +1,24 @@
 #!/bin/bash
-OP=('train' 'test')
-for((k=0;k<10;k++))
+## create model dir
+cd model
+for((i=0;i<4;i++))
 do
-    for((i=0;i<4;i++))
+    mkdir -p mode${i}
+    cd mode${i}
+    for((j=0;j<5;j++))
     do
-        for((j=0;j<5;j++))
-        do
-            python Dl4dNet.py ${OP[0]} data/mode${i}_cv${j}_train.npz data/mode${i}_cv${j}_test.npz
-            python -u Dl4dNet.py ${OP[1]} data/mode${i}_cv${j}_train.npz data/mode${i}_cv${j}_test.npz | tee -a data/mode${i}_cv${j}_counter{k}.log
-            sleep 1
-        done
+        mkdir -p cv${j}
+    done
+    cd ..
+done
+cd ..
+
+## execute 5-fold training
+for((i=0;i<4;i++))
+do
+    for((j=0;j<5;j++))
+    do
+        python Dl4dNet.py test data/mode${i}_cv${j}_train.npz data/mode${i}_cv${j}_test.npz model/mode${i}/cv${j} result/mode${i}_cv${j}_WrongIds.npz
+        sleep 3
     done
 done

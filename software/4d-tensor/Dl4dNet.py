@@ -83,7 +83,7 @@ def single_net(RES):
     return x, ft, y_, h_fc1
 
 class DLSpMVModel(object):
-    def __init__(self, train_data, test_data):
+    def __init__(self, train_data, test_data, model_data, result_data):
 
         self.RES = 0
         self.mean = 0
@@ -104,6 +104,8 @@ class DLSpMVModel(object):
             self.RES = self.test.images.shape[-1] # 128
 
         self.STEPS = 5000
+        self.output = result_data
+        self.model = model_data
 
     def build_graph(self):
         pass
@@ -188,7 +190,7 @@ class DLSpMVModel(object):
             print('test accuracy %g' % accuracy.eval(feed_dict={x: self.test.images[:,0,:,:], ft: self.test.features, y_: self.test.labels, x2: self.test.images[:,1,:,:], ft2: self.test.features, y2_: self.test.labels, x3: self.test.images[:,2,:,:], ft3: self.test.features, y3_: self.test.labels, x4: self.test.images[:,3,:,:], ft4: self.test.features, y4_: self.test.labels, keep_prob: 1.0}))
 
             # save model and checkpoint
-            save_path = saver.save(sess, os.path.join(ROOTDIR, "model/model-{}.ckpt".format(self.STEPS)))
+            save_path = saver.save(sess, os.path.join(ROOTDIR, self.model, "model-{}.ckpt".format(self.STEPS)))
             print("Model saved in file %s" % save_path)
 
     def testing(self):
@@ -203,11 +205,11 @@ class DLSpMVModel(object):
 
         with tf.Session() as sess:
             # retore graph
-            saver = tf.train.import_meta_graph(os.path.join(ROOTDIR, 'single-model/model-{}.ckpt.meta'.format(self.STEPS)))
+            saver = tf.train.import_meta_graph(os.path.join(ROOTDIR, self.model, 'model-{}.ckpt.meta'.format(self.STEPS)))
             # the current graph can be explored by
             graph = tf.get_default_graph()
             # restore value
-            saver.restore(sess, tf.train.latest_checkpoint(os.path.join(ROOTDIR, 'single-model')))
+            saver.restore(sess, tf.train.latest_checkpoint(os.path.join(ROOTDIR, self.model)))
             print("Model restored")
 
             x = graph.get_tensor_by_name("fc_snip1/input/x:0")
@@ -224,29 +226,41 @@ class DLSpMVModel(object):
             y4_ = graph.get_tensor_by_name("fc_snip4/input/y:0")
 
             keep_prob = graph.get_tensor_by_name("dropout/keep_prob:0")
-            acc = graph.get_tensor_by_name('train/acc_to_restore:0')
+            #acc = graph.get_tensor_by_name('train/acc_to_restore:0')
             y_conv = graph.get_tensor_by_name('out/y_conv_restore:0')
            # test
             print("-------------------------------------------------------")
-            print('Test accuracy %g' % sess.run(acc, feed_dict={x: self.test.images[:,0,:,:], y_: self.test.labels, x2: self.test.images[:,1,:,:], y2_: self.test.labels, keep_prob: 1.0}))
+            out_y = sess.run(y_conv, feed_dict={x: self.test.images[:,0,:,:], ft: self.test.features, y_: self.test.labels, x2: self.test.images[:,1,:,:], ft2: self.test.features, y2_: self.test.labels, x3: self.test.images[:,2,:,:], ft3: self.test.features, y3_: self.test.labels, x4: self.test.images[:,3,:,:], ft4: self.test.features, y4_: self.test.labels, keep_prob: 1.0})
+
+            wrongIds = np.zeros((self.test.labels.shape[0], 2), dtype='int32')
+            for i in range(self.test.labels.shape[0]):
+                wrongIds[i][0] = np.argmax(self.test.labels[i])
+                wrongIds[i][1] = np.argmax(out_y[i])
+            np.savez('{}'.format(self.output), wrongIds=wrongIds)
+            #print('Test accuracy %g' % sess.run(acc, feed_dict={x: self.test.images[:,0,:,:], ft: self.test.features, y_: self.test.labels, x2: self.test.images[:,1,:,:], ft2: self.test.features, y2_: self.test.labels, keep_prob: 1.0}))
             print("-------------------------------------------------------")
 
 
 def main():
-    if len(sys.argv) < 3:
-        print("usage: {} flag{train, test, predict} {train dat} {test data}")
+    if len(sys.argv) < 5:
+        print("usage: {} flag{train, test, predict} {train data} {test data} {model data} {result data}")
         exit()
-
 
     FLAG = sys.argv[1].lower()
     train_data = sys.argv[2]
     test_data = sys.argv[3]
+    model_data = sys.argv[4]
+    result_data = sys.argv[5]
 
     print(train_data)
     print(test_data)
+    print(model_data)
+    print(result_data)
 
     model = DLSpMVModel(os.path.join(ROOTDIR, train_data),
-                        os.path.join(ROOTDIR, test_data))
+                        os.path.join(ROOTDIR, test_data),
+                        os.path.join(ROOTDIR, model_data),
+                        os.path.join(ROOTDIR, result_data))
 
     if FLAG == 'train':
         model.training()

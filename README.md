@@ -1,9 +1,5 @@
 # SpTFS
 
-## Experiment data
-
-Directory: data
-
 ## Code
 
 Directory: software
